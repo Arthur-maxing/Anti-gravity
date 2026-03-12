@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trio vs. Gravity | Antigravity Chronicles</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- PyScript -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <span class="loader"></span>
+        <p style="margin-top: 20px; font-weight: 300; letter-spacing: 2px;">INICIALIZANDO SISTEMAS DE GRAVIDADE...</p>
+    </div>
+
+    <h1>TRIO VS. GRAVITY</h1>
+
+    <div id="game-container">
+        <div id="hud">
+            <div class="character-selector">
+                <div id="icon-1" class="char-icon char-aero active">1</div>
+                <div id="icon-2" class="char-icon char-bould">2</div>
+                <div id="icon-3" class="char-icon char-flux">3</div>
+            </div>
+            <div class="ability-status">
+                <span id="ability-name">AERO: PLANAGEM</span>
+                <div class="energy-bar">
+                    <div id="energy-fill" class="energy-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <canvas id="game-canvas" width="960" height="540"></canvas>
+
+        <div class="overlay">
+            Mover: <kbd>WASD</kbd> / <kbd>↑↓←→</kbd> | Trocar: <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> | Habilidade: <kbd>SPACE</kbd>
+        </div>
+    </div>
+
+    <script type="py" src="./main.py" config='./pyscript.json'></script>
+
+</body>
+</html>
