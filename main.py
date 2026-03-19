@@ -91,17 +91,17 @@ class Game:
             [1,0,0,0,0,0,0,0,0,0,1,1,1,2,2,1,0,0,0,0,1,1,1,1],
             [1,0,0,0,0,1,1,0,0,0,1,1,1,2,2,1,0,0,0,0,1,1,1,1],
             [1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
-            [1,0,3,3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
+            [1,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
         
         self.characters = [
-            Aero(60, 400),
-            Bould(60, 400),
-            Flux(60, 400)
+            Aero(100, 300),
+            Bould(100, 300),
+            Flux(100, 300)
         ]
         self.active_index = 0
-        self.keys = {}
+        self.keys = set()
         self.win_state = False
         
         # Audio icon setup
@@ -119,7 +119,7 @@ class Game:
         return self.characters[self.active_index]
 
     def on_keydown(self, e):
-        self.keys[e.code] = True
+        self.keys.add(e.code)
         if e.code == "Digit1": self.switch_char(0)
         if e.code == "Digit2": self.switch_char(1)
         if e.code == "Digit3": self.switch_char(2)
@@ -135,7 +135,8 @@ class Game:
                 char.double_jump_ready = False
 
     def on_keyup(self, e):
-        self.keys[e.code] = False
+        if e.code in self.keys:
+            self.keys.remove(e.code)
 
     def switch_char(self, index):
         prev_char = self.active_char()
@@ -160,9 +161,12 @@ class Game:
         char = self.active_char()
         
         # Horizontal Movement
-        if self.keys.get("ArrowLeft") or self.keys.get("KeyA"):
+        move_left = "ArrowLeft" in self.keys or "KeyA" in self.keys
+        move_right = "ArrowRight" in self.keys or "KeyD" in self.keys
+        
+        if move_left:
             char.vx = -char.speed
-        elif self.keys.get("ArrowRight") or self.keys.get("KeyD"):
+        elif move_right:
             char.vx = char.speed
         else:
             char.vx *= 0.7 # Low friction for better control
@@ -170,7 +174,7 @@ class Game:
             
         # Flux Gravity Inversion
         is_flux = char.name == "Flux"
-        if is_flux and self.keys.get("KeyF") and char.energy > 0:
+        if is_flux and "KeyF" in self.keys and char.energy > 0:
             char.is_inverted = True
             char.energy -= 1.5
             current_gravity = -char.gravity
@@ -243,18 +247,16 @@ class Game:
                                 char.vx = 0
                             else:
                                 if char.vy > 0: # Falling
-                                    char.y = ty - char.height
-                                    char.vy = 0
-                                    char.on_ground = True
+                                    # Special for Bould: smash blocks if falling fast
                                     if tile == FRAGILE and char.name == "Bould" and char.vy > 2:
-                                         self.map[r][c] = EMPTY
+                                        self.map[r][c] = EMPTY
+                                    else:
+                                        char.y = ty - char.height
+                                        char.vy = 0
+                                        char.on_ground = True
                                 elif char.vy < 0: # Jumping
                                     char.y = ty + TILE_SIZE
                                     char.vy = 0
-                                    
-                                # Special for Bould: smash blocks if falling fast
-                                if tile == FRAGILE and char.name == "Bould":
-                                    self.map[r][c] = EMPTY
 
     def draw(self):
         self.ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
@@ -306,14 +308,39 @@ class Game:
             self.ctx.fillStyle = "white"
             self.ctx.fillRect(char.x, char.y, char.width, char.height)
 
-async def main():
-    game = Game()
-    
-    def loop(time):
-        game.update()
-        game.draw()
-        requestAnimationFrame(create_proxy(loop))
-    
-    requestAnimationFrame(create_proxy(loop))
+# Global references to prevent garbage collection
+game_instance = None
+game_loop_proxy = None
 
+def run_game_loop(time):
+    try:
+        if game_instance:
+            game_instance.update()
+            game_instance.draw()
+        window.requestAnimationFrame(game_loop_proxy)
+    except Exception as e:
+        print(f"Loop error: {e}")
+
+async def main():
+    global game_instance, game_loop_proxy
+    try:
+        print("Trio vs. Gravity: Inicializando...")
+        game_instance = Game()
+        
+        # Key set is already initialized in __init__ now
+        
+        # Hide loading screen
+        if document.getElementById("loading-screen"):
+            document.getElementById("loading-screen").style.display = "none"
+            print("HUD: Sistema Pronto.")
+
+        game_loop_proxy = create_proxy(run_game_loop)
+        print("Sincronia estabelecida. Iniciando loop temporal.")
+        window.requestAnimationFrame(game_loop_proxy)
+        
+    except Exception as e:
+        print(f"Erro fatal: {e}")
+        window.alert(f"Erro ao carregar o jogo: {e}")
+
+# Iniciar execução assíncrona
 asyncio.ensure_future(main())

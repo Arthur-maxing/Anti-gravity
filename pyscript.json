@@ -1,7 +1,4 @@
 {
     "name": "Trio vs Gravity",
-    "description": "Manipulate gravity in this puzzle platformer",
-    "files": {
-        "./main.py": "./main.py"
-    }
+    "description": "Manipulate gravity in this puzzle platformer"
 }
